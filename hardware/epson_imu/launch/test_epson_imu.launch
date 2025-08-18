@@ -1,4 +1,0 @@
-<launch>
-  <env name="ASTROBEE_CONFIG_DIR" value="$(find astrobee)/../../config" />
-  <node pkg="nodelet" type="nodelet" name="imu_nodelet" args="standalone epson_imu/EpsonImuNodelet" />
-</launch>
