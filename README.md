@@ -2,7 +2,7 @@
 
 <div align="center">
   <a href="https://www.youtube.com/watch?v=HtXU6vCQlZI">
-    <img src="media/waypoint_nav_2d.gif" alt="Waypoint Navigation" width="800">
+    <img src="media/astrobee.mp4" alt="Astrobee Navigation" width=600">
   </a>
 </div>
 
