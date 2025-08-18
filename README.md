@@ -1,51 +1,116 @@
-# Astrobee ROS Guest Science Demo
+# Astrobee ROS
 
 <div align="center">
   <a href="https://www.youtube.com/watch?v=HtXU6vCQlZI">
-    <img src="media/astrobee.mp4" alt="Astrobee Navigation" width=600">
+    <img src="media/astrobee.gif" alt="Astrobee navigation demo" width="600">
   </a>
 </div>
 
-This package contains two simple examples to interface custom ROS nodes for autonomous control: one using Python - `nodes/python_ros_node_template.py` - and one using C++ - `nodes/cpp_ros_node_template.py`. Both nodes have associated launch files under the `launch/` directory.
+Minimal ROS nodes (Python & C++) to plug custom autonomous controllers into the [Astrobee](https://nasa.github.io/astrobee/) simulator. Each template comes with a launch file and a few convenience hooks so you can focus on control, not boilerplate.
 
-## Requirements
-This work has been tested on Ubuntu 18.04, ROS Melodic and Python 3.8.
+## What’s inside
 
-## Installation
-To install this package, make sure that you follow the [Astrobee Installation Guide](https://nasa.github.io/astrobee/html/md_INSTALL.html) for building the code natively. 
+* **Python node**: `nodes/python_ros_node_template.py`
+* **C++ node**: `nodes/cpp_ros_node_template.cpp`
+* **Launch files**: see `launch/` (Python and C++ variants)
+* **Sim bring-up**: `astrobee_sim.launch` (spins up Astrobee + world)
 
-Assuming your catkin workspace is set at `~/catkin_ws`, then
-```
+## Tested setup
+
+* Ubuntu 18.04
+* ROS Melodic
+* Python 3.8
+
+> Other combos may work, but the above is what this repo has been verified on.
+
+## Install
+
+Make sure you’ve completed the official [Astrobee installation](https://nasa.github.io/astrobee/html/md_INSTALL.html) first. Then:
+
+```bash
+# assuming your catkin workspace is ~/catkin_ws
 cd ~/catkin_ws
 git clone https://github.com/ArghyaChatterjee/astrobee_ros.git src/astrobee_ros
-catkin build
+catkin build        # or: catkin_make if you don't use catkin-tools
 source devel/setup.bash
 ```
-If the package `python-catkin-tools` is not installed, replace `catkin build` with `catkin_make`.
 
-## Run an Example
-Once the installation is done, a simple example can be run with either the `cpp_template_interface.launch` or `python_template_interface.launch`. To this end, make sure that you have the most up-to-date version of the Astrobee Simulator. 
+If `python-catkin-tools` isn’t installed, use `catkin_make`.
 
-1. Start the simulator with
+## Quick start (simulation + template)
+
+1. **Start the simulator**
+
+```bash
+roslaunch astrobee_ros astrobee_sim.launch
 ```
-roslaunch astrobee_ros_demo astrobee_sim.launch
+
+2. **Bring up one of the templates** (pick one)
+
+```bash
+# Python
+roslaunch astrobee_ros python_template_interface.launch
+
+# or C++
+roslaunch astrobee_ros cpp_template_interface.launch
 ```
-2. Launch the template interface, for instance
-```
-roslaunch astrobee_ros_demo python_template_interface.launch
-```
-3. Make sure that Honey is not in a faulty state by overriding its state with
-```
+
+3. **Clear any faulted state** (for the `honey` robot)
+
+```bash
 rostopic pub /honey/mgt/sys_monitor/state ff_msgs/FaultState '{state: 0}'
 ```
-4. At this point, the template node should show "Sleeping..." as a ROS Info message. This means that the node is waiting ot be started. To start the node, call the starting service with
-```
+
+4. **Start the template node**
+
+```bash
 rosservice call /honey/start "data: true"
 ```
 
-At this point, the template node output should show "Elapsed time: 0" as a ROS Info message, since there is no control input being generated.
+You should now see something like `Sleeping...` followed by messages such as `Elapsed time: 0` in the node console. That means the node is alive and ready; by default it doesn’t send a control input yet.
 
-## Interface your own control algorithm
-This package serves as a template for those looking to use the Astrobee for autonomous operations. Your controllers can be included directly on the templated code, by modifying the variables [self.u_traj](https://github.com/ArghyaChatterjee/astrobee_ros/blob/main/nodes/python_ros_node_template.py#L298) in Python or [control_input_](https://github.com/ArghyaChatterjee/astrobee_ros/blob/main/nodes/cpp_ros_node_template.cpp#L238) in C++. This can be accomplished either by 
-1. Subscribing to another node that runs your control method that modifies these variables directly, or 
-2. Modifying the template to include your control method in the class itself.
+## Plug in your controller
+
+Both templates expose a single place where you set the control command that gets sent to the robot each loop.
+
+* **Python**: edit `nodes/python_ros_node_template.py` and populate `self.u_traj`
+* **C++**: edit `nodes/cpp_ros_node_template.cpp` and populate `control_input_`
+
+Two common patterns:
+
+1. **External controller node**
+   Subscribe in the template to a topic your controller publishes, and write into `self.u_traj` (Python) or `control_input_` (C++).
+
+2. **Inline controller**
+   Implement your controller directly in the template’s update loop and set the control variables there.
+
+> Tip: Search for the comments marked `TODO(control)` in each template to find the right spot quickly.
+
+## Useful topics & services
+
+* Start/stop service (per robot, e.g., `honey`): `/honey/start` (`std_srvs/SetBool`)
+* Fault state override: `/honey/mgt/sys_monitor/state` (`ff_msgs/FaultState`)
+
+If you prefer a different Astrobee robot (`bumble`, `queen`), change the robot name in the launch file or via a `robot:=` arg if provided.
+
+## Repo layout
+
+```
+astrobee_ros/
+├─ launch/
+│  ├─ astrobee_sim.launch
+│  ├─ python_template_interface.launch
+│  └─ cpp_template_interface.launch
+├─ nodes/
+│  ├─ python_ros_node_template.py
+│  └─ cpp_ros_node_template.cpp
+└─ media/
+   └─ astrobee.gif
+```
+
+## Troubleshooting
+
+* **Template never “starts”**: confirm you called `/honey/start` with `data: true`.
+* **Robot stuck faulted**: make sure you published `ff_msgs/FaultState` with `{state: 0}` on the correct robot namespace.
+* **Build issues**: verify ROS env is sourced and Astrobee was installed per the official guide.
+
