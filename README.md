@@ -1,4 +1,11 @@
 # Astrobee ROS Guest Science Demo
+
+<div align="center">
+  <a href="https://www.youtube.com/watch?v=HtXU6vCQlZI">
+    <img src="media/waypoint_nav_2d.gif" alt="Waypoint Navigation" width="800">
+  </a>
+</div>
+
 This package contains two simple examples to interface custom ROS nodes for autonomous control: one using Python - `nodes/python_ros_node_template.py` - and one using C++ - `nodes/cpp_ros_node_template.py`. Both nodes have associated launch files under the `launch/` directory.
 
 ## Installation
